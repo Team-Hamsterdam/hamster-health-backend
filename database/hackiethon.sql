@@ -1,8 +1,8 @@
 CREATE TABLE user (
     token string NOT NULL,
-    u_id integer NOT NULL,
-    password string NOT NULL,
+    -- u_id integer NOT NULL,
     username string UNIQUE NOT NULL,
+    password string NOT NULL,
     email string UNIQUE NOT NULL,
     name_first string NOT NULL,
     name_last string NOT NULL,
@@ -26,5 +26,3 @@ CREATE TABLE active task (
     foreign key (token) references user(token),
     foreign key (task_id) references tasks(task_id)
 )
-
-select u.token, u.password from user u where u.username = '{}'
