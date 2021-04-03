@@ -47,7 +47,7 @@ def generate_token(username):
 #     return response
 
 
-@app.route('/auth/login', methods=['POST', 'OPTIONS'])
+@app.route('/auth/login', methods=['POST'])
 @cross_origin()
 def auth_login():
     con = sqlite3.connect('../database/hackiethon.db')
@@ -71,8 +71,7 @@ def auth_login():
 
     return {'token': token}
 
-@app.route('/auth/register', methods=['POST', 'OPTIONS'])
-@cross_origin()
+@app.route('/auth/register', methods=['POST'])
 def auth_register():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
