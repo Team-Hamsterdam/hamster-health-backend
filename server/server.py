@@ -38,11 +38,23 @@ def generate_token(username):
     return jwt.encode({'username': username}, private_key, algorithm='HS256')
 
 @app.after_request
+@app.after_request
 def after_request_func(response):
-    response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "*")
-    response.headers.add("Access-Control-Allow-Methods", "*")
+    origin = request.headers.get('Origin')
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Headers', 'x-csrf-token')
+        response.headers.add('Access-Control-Allow-Methods',
+                            'GET, POST, OPTIONS, PUT, PATCH, DELETE')
+        if origin:
+            response.headers.add('Access-Control-Allow-Origin', '*')
+    else:
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        if origin:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+
     return response
 
 
@@ -251,4 +263,4 @@ def user_details():
     return {}
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=4000)
