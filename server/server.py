@@ -49,11 +49,7 @@ def generate_token(username):
 
 @app.route('/auth/login', methods=['POST', 'OPTIONS'])
 @cross_origin()
-def auth_login(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+def auth_login():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
@@ -77,11 +73,7 @@ def auth_login(response):
 
 @app.route('/auth/register', methods=['POST', 'OPTIONS'])
 @cross_origin()
-def auth_register(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+def auth_register():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
