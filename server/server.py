@@ -4,6 +4,7 @@ import sqlite3,sys
 from werkzeug.exceptions import HTTPException
 import hashlib
 import jwt
+from flask_cors import CORS, cross_origin
 app = Flask(__name__)
 CORS(app)
 
@@ -47,6 +48,7 @@ def generate_token(username):
 
 
 @app.route('/auth/login', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def auth_login(response):
     response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
@@ -74,6 +76,7 @@ def auth_login(response):
     return {'token': token}
 
 @app.route('/auth/register', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def auth_register(response):
     response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
