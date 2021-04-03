@@ -1,10 +1,11 @@
 from flask import Flask, request
-# from app import app
+from flask_cors import CORS
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
 import hashlib
 import jwt
 app = Flask(__name__)
+CORS(app)
 
 con = sqlite3.connect('../database/hackiethon.db')
 cur = con.cursor()
@@ -193,7 +194,8 @@ def task_gettasks():
     query = '''select t.task_id, t.title, t.description, t.task_xp from task
                 join active_task active on active.task_id = t.task_id
                 where active.token = {};'''.format(data['token'])
-    return {}
+    tasks = cur.fetchall()
+    return {'tasks': tasks}
 
 @app.route('/user/list', methods=['GET'])
 def user_list():
