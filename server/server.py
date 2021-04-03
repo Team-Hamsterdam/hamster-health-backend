@@ -55,7 +55,7 @@ def auth_login():
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
         raise InputError ('Please enter your username and password')
-    query = ''''select u.token, u.password from user u where u.username = "{}"; '''.format(data['username'])
+    query = '''select u.token, u.password from user u where u.username = "{}"; '''.format(data['username'])
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -66,7 +66,7 @@ def auth_login():
         raise AccessError ('Incorrect password')
 
     cur.execute('BEGIN TRANSACTION;')
-    cur.execute('''INSERT INTO user (logged_in) VALUES (True) where user.token = "{}";''').format(token)
+    cur.execute('''UPDATE user set logged_in = 1 where user.token = "{}";'''.format(token))
     cur.execute('COMMIT;')
 
     return {'token': token}
