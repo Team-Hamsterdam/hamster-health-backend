@@ -76,9 +76,9 @@ def auth_register():
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
     query = '''BEGIN TRANSACTION;
-                INSERT INTO user (token, username, password, email, name_first, name_last, level, xp) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', 0, 0);
+                INSERT INTO user (token, username, password, email, name, level, xp) VALUES ('{}', '{}', '{}', '{}', '{}', 0, 0);
                COMMIT;
-            '''.format(token, data['username'], hashed_password, data['email'], data['name_first'], data['name_last'])
+            '''.format(token, data['username'], hashed_password, data['email'], data['name'])
     cur.execute(query)
     return {'token': token}
 
@@ -138,50 +138,61 @@ def task_remove():
     cur.execute(query)
     return {}
 
-# @app.route('/task/finish', methods=['PUT'])
-# def task_finish():
-#     xp_threshold = 50
-#     new_level = 0
-#     new_xp = 0
-#     data = request.get_json()
-#     if data['token'] is None:
-#         raise AccessError ("Invalid Token")
-#     if data['task_id'] is None:
-#         raise NotFound ("Task not found")
-#     query = '''select u.token from user.u where u.token = '{}';'''.format(data['token'])
-#     cur.execute(query)
-#     x = cur.fetchone()
-#     if x is None:
-#         raise AccessError ("Invalid Token")
-#     query = '''BEGIN TRANSACTION;
-#                 UPDATE active_task t
-#                 SET  is_completed = True
-#                 WHERE t.token = '{}';
-#                 COMMIT;'''.format(data['token'])
-#     cur.execute(query)
-#     cur.execute('''select t.task_xp from task t where t.task_id = {};'''.format(data['task_id']))
-#     task_xp = cur.fetchone
-#     query = '''select u.level, u.xp from user u where u.token = '{}';'''.format(data['token'])
-#     x = cur.fetchone()
-#     level, xp = x
-#     if xp + task_xp >= xp_threshold:
-#         new_xp = (xp + task_xp) - xp_threshold
-#         new_level = level + 1
-#     else:
-#         new_xp = xp + task_xp
-#         new_level = level
-#     query = ''' BEGIN TRANSACTION;
-#                     UPDATE user u
-#                         SET u.level = {},
-#                             u.xp = {}
-#                     WHERE u.token = '{}';
-#                 COMMIT;'''.format(new_level, new_xp, data['token'])
-#     cur.execute(query)
+@app.route('/task/finish', methods=['PUT'])
+def task_finish():
+    xp_threshold = 50
+    new_level = 0
+    new_xp = 0
+    data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    if data['task_id'] is None:
+        raise NotFound ("Task not found")
+    query = '''select u.token from user.u where u.token = '{}';'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
+    query = '''BEGIN TRANSACTION;
+                UPDATE active_task t
+                SET  is_completed = True
+                WHERE t.token = '{}';
+                COMMIT;'''.format(data['token'])
+    cur.execute(query)
+    cur.execute('''select t.task_xp from task t where t.task_id = {};'''.format(data['task_id']))
+    task_xp = cur.fetchone
+    query = '''select u.level, u.xp from user u where u.token = '{}';'''.format(data['token'])
+    x = cur.fetchone()
+    level, xp = x
+    if xp + task_xp >= xp_threshold:
+        new_xp = (xp + task_xp) - xp_threshold
+        new_level = level + 1
+    else:
+        new_xp = xp + task_xp
+        new_level = level
+    query = ''' BEGIN TRANSACTION;
+                    UPDATE user u
+                        SET u.level = {},
+                            u.xp = {}
+                    WHERE u.token = '{}';
+                COMMIT;'''.format(new_level, new_xp, data['token'])
+    cur.execute(query)
 
-#     return {}
+    return {}
 
 @app.route('/task/gettasks', methods=['GET'])
 def task_gettasks():
+    data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user.u where u.token = '{}';'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
+    query = '''select t.task_id, t.title, t.description, t.task_xp from task
+                join active_task active on active.task_id = t.task_id
+                where active.token = {};'''.format(data['token'])
     return {}
 
 @app.route('/user/list', methods=['GET'])

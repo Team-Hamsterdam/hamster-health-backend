@@ -1,15 +1,13 @@
 CREATE TABLE user (
     token string NOT NULL,
-    -- u_id integer NOT NULL,
     username string UNIQUE NOT NULL,
     password string NOT NULL,
     email string UNIQUE NOT NULL,
-    name_first string NOT NULL,
-    name_last string NOT NULL,
+    name string NOT NULL,
     level integer,
     xp integer,
     PRIMARY KEY (token)
-)
+);
 
 CREATE table task (
     task_id integer NOT NULL,
@@ -18,7 +16,7 @@ CREATE table task (
     task_xp integer,
     is_custom boolean,
     PRIMARY KEY (task_id)
-)
+);
 
 CREATE TABLE active_task (
     token string NOT NULL,
@@ -27,7 +25,7 @@ CREATE TABLE active_task (
     PRIMARY KEY (token, task_id),
     foreign key (token) references user(token),
     foreign key (task_id) references tasks(task_id)
-)
+);
 
 -- select count(t.task_id) from task t
 
@@ -52,3 +50,7 @@ CREATE TABLE active_task (
 --             u.xp = {}
 --     WHERE u.token = {};
 -- COMMIT;
+
+-- select t.task_id, t.title, t.description, t.task_xp from task
+-- join active_task active on active.task_id = t.task_id
+-- where active.token = {};
