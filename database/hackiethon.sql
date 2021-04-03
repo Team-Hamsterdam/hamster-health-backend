@@ -4,6 +4,7 @@ CREATE TABLE user (
     password string NOT NULL,
     email string UNIQUE NOT NULL,
     name string NOT NULL,
+    logged_in boolen,
     level integer,
     xp integer,
     PRIMARY KEY (token)
