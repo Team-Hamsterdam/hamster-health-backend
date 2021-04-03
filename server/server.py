@@ -1,10 +1,10 @@
 from flask import Flask, request
-from app import app
+# from app import app
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
 import hashlib
 import jwt
-app = Flask(app)
+app = Flask(__name__)
 
 con = sqlite3.connect('../database/hackiethon.db')
 cur = con.cursor()
@@ -181,15 +181,15 @@ def task_remove():
 #     return {}
 
 @app.route('/task/gettasks', methods=['GET'])
-def task_finish():
+def task_gettasks():
     return {}
 
 @app.route('/user/list', methods=['GET'])
-def task_finish():
+def user_list():
     return {}
 
 @app.route('/user/details', methods=['GET'])
-def task_finish():
+def user_details():
     return {}
 
 if __name__ == '__main__':
