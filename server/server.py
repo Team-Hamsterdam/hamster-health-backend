@@ -7,8 +7,7 @@ import jwt
 app = Flask(__name__)
 CORS(app)
 
-con = sqlite3.connect('../database/hackiethon.db')
-cur = con.cursor()
+
 class ConflictError(HTTPException):
     code = 409
     message = 'No message specified'
@@ -36,10 +35,12 @@ def generate_token(username):
     Output: JWT-encoded token (str)
     '''
     private_key = 'HamsterHealthIsTheBestWebsite'
-    return jwt.encode({'username': username}, private_key, algorithm='HS256').decode('utf-8')
+    return jwt.encode({'username': username}, private_key, algorithm='HS256')
 
 @app.route('/auth/login', methods=['POST'])
 def auth_login():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
         raise InputError ('Please enter your username and password')
@@ -52,23 +53,30 @@ def auth_login():
     hashed_password = hasher(data['username'])
     if hashed_password != password:
         raise AccessError ('Incorrect password')
+
+    cur.execute('BEGIN TRANSACTION;')
+    cur.execute('''INSERT INTO user (logged_in) VALUES (True) where user.token = '{}';''').format(token)
+    cur.execute('COMMIT;')
+
     return {'token': token}
 
 @app.route('/auth/register', methods=['POST'])
 def auth_register():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None or data['name'] is None or data['email'] is None:
         raise InputError ('Please fill in all details')
-
+    print(data)
     # Checks if username is unique
-    query = ''''select u.username from user u where u.username = '{}'; '''.format(data['username'])
+    query = '''select u.username from user u where u.username = '{}'; '''.format(data['username'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
         raise ConflictError ('Username already taken')
 
     # Checks if email is unique
-    query = ''''select u.email from user u where u.email = '{}'; '''.format(data['email'])
+    query = '''select u.email from user u where u.email = '{}'; '''.format(data['email'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
@@ -76,12 +84,30 @@ def auth_register():
 
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
-    query = '''BEGIN TRANSACTION;
+    cur.execute('BEGIN TRANSACTION;')
+    query = '''
                 INSERT INTO user (token, username, password, email, name, level, xp) VALUES ('{}', '{}', '{}', '{}', '{}', 0, 0);
-               COMMIT;
+
             '''.format(token, data['username'], hashed_password, data['email'], data['name'])
     cur.execute(query)
+    cur.execute('COMMIT;')
     return {'token': token}
+
+@app.route('/auth/check', methods=['GET'])
+def auth_check():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
+    data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.logged_in from user.u where u.token = '{}';'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
+    if x is False:
+        raise AccessError ("User not logged in")
+    return {'token': data['token']}
 
 @app.route('/task/create', methods=['POST'])
 def task_create():
@@ -206,4 +232,4 @@ def user_details():
     return {}
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5500)
+    app.run(debug=True, port=5000)
