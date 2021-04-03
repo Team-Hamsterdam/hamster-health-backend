@@ -1,9 +1,10 @@
 from flask import Flask, request
+from app import app
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
 import hashlib
 import jwt
-app = Flask(__name__)
+app = Flask(app)
 
 con = sqlite3.connect('../database/hackiethon.db')
 cur = con.cursor()
@@ -137,47 +138,47 @@ def task_remove():
     cur.execute(query)
     return {}
 
-@app.route('/task/finish', methods=['PUT'])
-def task_finish():
-    xp_threshold = 50
-    new_level = 0
-    new_xp = 0
-    data = request.get_json()
-    if data['token'] is None:
-        raise AccessError ("Invalid Token")
-    if data['task_id'] is None:
-        raise NotFound ("Task not found")
-    query = '''select u.token from user.u where u.token = '{}';'''.format(data['token'])
-    cur.execute(query)
-    x = cur.fetchone()
-    if x is None:
-        raise AccessError ("Invalid Token")
-    query = '''BEGIN TRANSACTION;
-                UPDATE active_task t
-                SET  is_completed = True
-                WHERE t.token = '{}';
-                COMMIT;'''.format(data['token'])
-    cur.execute(query)
-    cur.execute('''select t.task_xp from task t where t.task_id = {};'''.format(data['task_id']))
-    task_xp = cur.fetchone
-    query = '''select u.level, u.xp from user u where u.token = '{}';'''.format(data['token'])
-    x = cur.fetchone()
-    level, xp = x
-    if xp + task_xp >= xp_threshold:
-        new_xp = (xp + task_xp) - xp_threshold
-        new_level = level + 1
-    else:
-        new_xp = xp + task_xp
-        new_level = level
-    query = ''' BEGIN TRANSACTION;
-                    UPDATE user u
-                        SET u.level = {},
-                            u.xp = {}
-                    WHERE u.token = '{}';
-                COMMIT;'''.format(new_level, new_xp, data['token'])
-    cur.execute(query)
+# @app.route('/task/finish', methods=['PUT'])
+# def task_finish():
+#     xp_threshold = 50
+#     new_level = 0
+#     new_xp = 0
+#     data = request.get_json()
+#     if data['token'] is None:
+#         raise AccessError ("Invalid Token")
+#     if data['task_id'] is None:
+#         raise NotFound ("Task not found")
+#     query = '''select u.token from user.u where u.token = '{}';'''.format(data['token'])
+#     cur.execute(query)
+#     x = cur.fetchone()
+#     if x is None:
+#         raise AccessError ("Invalid Token")
+#     query = '''BEGIN TRANSACTION;
+#                 UPDATE active_task t
+#                 SET  is_completed = True
+#                 WHERE t.token = '{}';
+#                 COMMIT;'''.format(data['token'])
+#     cur.execute(query)
+#     cur.execute('''select t.task_xp from task t where t.task_id = {};'''.format(data['task_id']))
+#     task_xp = cur.fetchone
+#     query = '''select u.level, u.xp from user u where u.token = '{}';'''.format(data['token'])
+#     x = cur.fetchone()
+#     level, xp = x
+#     if xp + task_xp >= xp_threshold:
+#         new_xp = (xp + task_xp) - xp_threshold
+#         new_level = level + 1
+#     else:
+#         new_xp = xp + task_xp
+#         new_level = level
+#     query = ''' BEGIN TRANSACTION;
+#                     UPDATE user u
+#                         SET u.level = {},
+#                             u.xp = {}
+#                     WHERE u.token = '{}';
+#                 COMMIT;'''.format(new_level, new_xp, data['token'])
+#     cur.execute(query)
 
-    return {}
+#     return {}
 
 @app.route('/task/gettasks', methods=['GET'])
 def task_finish():
@@ -192,4 +193,4 @@ def task_finish():
     return {}
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True, port=5500)
