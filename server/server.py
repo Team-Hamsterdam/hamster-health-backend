@@ -37,29 +37,21 @@ def generate_token(username):
     private_key = 'HamsterHealthIsTheBestWebsite'
     return jwt.encode({'username': username}, private_key, algorithm='HS256')
 
-@app.after_request
-@app.after_request
-def after_request_func(response):
-    origin = request.headers.get('Origin')
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Headers', 'x-csrf-token')
-        response.headers.add('Access-Control-Allow-Methods',
-                            'GET, POST, OPTIONS, PUT, PATCH, DELETE')
-        if origin:
-            response.headers.add('Access-Control-Allow-Origin', '*')
-    else:
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        if origin:
-            response.headers.add('Access-Control-Allow-Origin', origin)
-
-    return response
+# @app.after_request
+# def after_request_func(response):
+#     response = make_response()
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     response.headers.add("Access-Control-Allow-Headers", "*")
+#     response.headers.add("Access-Control-Allow-Methods", "*")
+#     return response
 
 
 @app.route('/auth/login', methods=['POST', 'OPTIONS'])
-def auth_login():
+def auth_login(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
@@ -82,7 +74,11 @@ def auth_login():
     return {'token': token}
 
 @app.route('/auth/register', methods=['POST', 'OPTIONS'])
-def auth_register():
+def auth_register(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000/%27')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
