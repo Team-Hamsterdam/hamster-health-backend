@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 from flask_cors import CORS
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
@@ -37,7 +37,16 @@ def generate_token(username):
     private_key = 'HamsterHealthIsTheBestWebsite'
     return jwt.encode({'username': username}, private_key, algorithm='HS256')
 
-@app.route('/auth/login', methods=['POST'])
+@app.after_request
+def after_request_func(response):
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
+    return response
+
+
+@app.route('/auth/login', methods=['POST', 'OPTIONS'])
 def auth_login():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
@@ -60,7 +69,7 @@ def auth_login():
 
     return {'token': token}
 
-@app.route('/auth/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST', 'OPTIONS'])
 def auth_register():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
@@ -111,6 +120,8 @@ def auth_check():
 
 @app.route('/task/create', methods=['POST'])
 def task_create():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['title'] is None:
         raise InputError ("Please enter a title")
@@ -136,6 +147,8 @@ def task_create():
 
 @app.route('/task/edit', methods=['PUT'])
 def task_edit():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['title'] is None:
         raise InputError ("Please enter a title")
@@ -150,6 +163,8 @@ def task_edit():
 
 @app.route('/task/remove', methods=['DELETE'])
 def task_remove():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['task_id'] is None:
         raise NotFound ("Task not found")
@@ -167,6 +182,8 @@ def task_remove():
 
 @app.route('/task/finish', methods=['PUT'])
 def task_finish():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     xp_threshold = 50
     new_level = 0
     new_xp = 0
@@ -180,12 +197,12 @@ def task_finish():
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    query = '''BEGIN TRANSACTION;
-                UPDATE active_task t
+    cur.execute('BEGIN TRANSACTION;')
+    query = '''UPDATE active_task t
                 SET  is_completed = True
-                WHERE t.token = '{}';
-                COMMIT;'''.format(data['token'])
+                WHERE t.token = '{}';'''.format(data['token'])
     cur.execute(query)
+    cur.execute('COMMIT;')
     cur.execute('''select t.task_xp from task t where t.task_id = {};'''.format(data['task_id']))
     task_xp = cur.fetchone
     query = '''select u.level, u.xp from user u where u.token = '{}';'''.format(data['token'])
@@ -197,18 +214,20 @@ def task_finish():
     else:
         new_xp = xp + task_xp
         new_level = level
-    query = ''' BEGIN TRANSACTION;
-                    UPDATE user u
-                        SET u.level = {},
-                            u.xp = {}
-                    WHERE u.token = '{}';
-                COMMIT;'''.format(new_level, new_xp, data['token'])
+    cur.execute('BEGIN TRANSACTION;')
+    query = ''' UPDATE user u
+                    SET u.level = {},
+                        u.xp = {}
+                WHERE u.token = '{}';'''.format(new_level, new_xp, data['token'])
     cur.execute(query)
+    cur.execute('COMMIT;')
 
     return {}
 
 @app.route('/task/gettasks', methods=['GET'])
 def task_gettasks():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
     data = request.get_json()
     if data['token'] is None:
         raise AccessError ("Invalid Token")
