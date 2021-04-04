@@ -110,23 +110,24 @@ def auth_register():
 def auth_check():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
-    data = request.get_json()
-    if data['token'] is None:
+    data = request.headers.get('Authorization')
+    if data is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.logged_in from user.u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.logged_in from user.u where u.token = "{}";'''.format(data)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
     if x is False:
         raise AccessError ("User not logged in")
-    return {'token': data['token']}
+    return {'token': data}
 
 @app.route('/task/create', methods=['POST'])
 @cross_origin()
 def task_create():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
+    parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if data['title'] is None:
         raise InputError ("Please enter a title")
@@ -144,7 +145,7 @@ def task_create():
     # Insert task into database
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO task (token, task_id, title, description, task_xp, is_custom)
-                VALUES ("{}", {}, "{}", "{}", {}, {});'''.format(data['token'], task_id, data['title'], data['description'], task_xp, 1)
+                VALUES ("{}", {}, "{}", "{}", {}, {});'''.format(parsed_token, task_id, data['title'], data['description'], task_xp, 1)
     cur.execute(query)
     cur.execute('COMMIT;')
     # Insert task into user task list
@@ -177,10 +178,11 @@ def task_edit():
 def task_remove():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
+    parsed_token = request.headers.get('Authorization')
     data = request.get_json()
-    if data['token'] is None:
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -189,7 +191,7 @@ def task_remove():
         raise NotFound ("Task not found")
     cur.execute('BEGIN TRANSACTION;')
     query = '''DELETE FROM task
-                WHERE task.task_id = {} and task.token = "{}";'''.format(data['task_id'], data['token'])
+                WHERE task.task_id = {} and task.token = "{}";'''.format(data['task_id'], parsed_token)
     cur.execute(query)
     cur.execute('COMMIT;')
     return {}
@@ -199,10 +201,11 @@ def task_remove():
 def task_removepersonal():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
+    parsed_token = request.headers.get('Authorization')
     data = request.get_json()
-    if data['token'] is None:
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -211,7 +214,7 @@ def task_removepersonal():
         raise NotFound ("Task not found")
     cur.execute('BEGIN TRANSACTION;')
     query = '''DELETE FROM active_task
-                WHERE active_task.task_id = {} and active_task.token = "{}";'''.format(data['task_id'], data['token'])
+                WHERE active_task.task_id = {} and active_task.token = "{}";'''.format(data['task_id'], parsed_token)
     cur.execute(query)
     cur.execute('COMMIT;')
     return {}
@@ -222,9 +225,10 @@ def task_add_active_task():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
-    if data['token'] is None:
+    parsed_token = request.headers.get('Authorization')
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -238,7 +242,7 @@ def task_add_active_task():
     title, description = x
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO active_task (token, task_id, title, description, is_completed)
-                VALUES ("{}", {}, "{}", "{}", 0);'''.format(data['token'], data['task_id'], title, description)
+                VALUES ("{}", {}, "{}", "{}", 0);'''.format(parsed_token, data['task_id'], title, description)
     cur.execute(query)
     cur.execute('COMMIT;')
     return {}
@@ -404,10 +408,11 @@ def user_list():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     users_list = []
-    data = request.get_json()
-    if data['token'] is None:
+    # data = request.get_json()
+    parsed_token = request.headers.get('Authorization')
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user.u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -436,14 +441,15 @@ def user_details():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
-    if data['token'] is None:
+    parsed_token = request.headers.get('Authorization')
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user.u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";').format(data['token'])
+    cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";').format(parsed_token)
     x = cur.fetchone()
     username, level, xp = x
     user = {
