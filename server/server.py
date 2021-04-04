@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, abort
+from flask import Flask, request, make_response, abort, jsonify
 from flask_cors import CORS
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
@@ -46,6 +46,27 @@ def generate_token(username):
 #     response.headers.add("Access-Control-Allow-Methods", "*")
 #     return response
 
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
+
 
 @app.route('/auth/login', methods=['POST'])
 @cross_origin()
@@ -86,7 +107,8 @@ def auth_register():
     x = cur.fetchone()
     if x is not None:
         # abort (409, description='Username already taken')
-        return 'Username already taken', 409
+        # return 'Username already taken', 409
+        raise InvalidUsage('Username already taken', status_code=409)
 
     # Checks if email is unique
     query = '''select u.email from user u where u.email = "{}"; '''.format(data['email'])
@@ -94,7 +116,8 @@ def auth_register():
     x = cur.fetchone()
     if x is not None:
         # abort (409, description='Email already in use')
-        return 'Email already in use', 409
+        # return 'Email already in use', 409
+        raise InvalidUsage('Email already taken', status_code=409)
 
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
