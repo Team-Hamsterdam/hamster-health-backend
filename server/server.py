@@ -132,20 +132,22 @@ def task_create():
         raise InputError ("Please enter a title")
     # Generate task_id
     task_id = 0
-    query = '''select count(t.task_id) from task t;'''
+    query = '''select max(t.task_id) from task t;'''
     cur.execute(query)
     task_id = cur.fetchone()
+    task_id += 1
     task_xp = 5
     # Insert task into database
     cur.execute('BEGIN TRANSACTION;')
-    query = '''INSERT INTO task (task_id, title, description, xp, is_custom) VALUES ({}, "{}", "{}", {}, {});'''.format(task_id, data['title'], data['description'], task_xp, True)
+    query = '''INSERT INTO task (token, task_id, title, description, xp, is_custom)
+                VALUES ("{}", {}, "{}", "{}", {}, {});'''.format(data['token'], task_id, data['title'], data['description'], task_xp, 1)
     cur.execute(query)
     cur.execute('COMMIT;')
-    # # Insert task into user task list
+    # Insert task into user task list
     # query = '''BEGIN TRANSACTION;
-    #             INSERT INTO active_task (token, task_id) VALUES ({}, {});
+    #             INSERT INTO active_task (token, task_id, title, description, is_completed) VALUES ("{}", {}, "{}", "{}", 0);
     #            COMMIT;
-    #         '''.format(task_id, data['token'], data['task_id'])
+    #         '''.format(data['token'], task_id, data['title'], data['description'])
     # cur.execute(query)
     return {'task_id': task_id}
 
@@ -158,9 +160,9 @@ def task_edit():
     if data['title'] is None:
         raise InputError ("Please enter a title")
     cur.execute('BEGIN TRANSACTION;')
-    query = '''UPDATE task t
+    query = '''UPDATE active_task t
                 SET  t.title = "{}",
-                        t.description = "{}"
+                     t.description = "{}"
                 WHERE t.task_id = {};'''.format(data['title'], data['description'], data['task_id'])
     cur.execute(query)
     cur.execute('COMMIT;')
@@ -172,16 +174,40 @@ def task_remove():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
+    if data['task_id'] is None:
+        raise NotFound ("Task not found")
+    cur.execute('BEGIN TRANSACTION;')
+    query = '''DELETE FROM task t
+                WHERE t.task_id = {} and t.token = "{}";'''.format(data['task_id'], data['token'])
+    cur.execute(query)
+    cur.execute('COMMIT;')
+    return {}
+
+@app.route('/task/removepersonal', methods=['DELETE'])
+@cross_origin()
+def task_removepersonal():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
+    data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
     if data['task_id'] is None:
         raise NotFound ("Task not found")
     cur.execute('BEGIN TRANSACTION;')
     query = '''DELETE FROM active_task t
                 WHERE t.task_id = {} and t.token = "{}";'''.format(data['task_id'], data['token'])
-    cur.execute(query)
-    cur.execute('COMMIT;')
-    cur.execute('BEGIN TRANSACTION;')
-    query = '''DELETE FROM task t
-                WHERE t.task_id = {};'''.format(data['task_id'])
     cur.execute(query)
     cur.execute('COMMIT;')
     return {}
@@ -268,6 +294,7 @@ def task_gettasks():
 @app.route('/user/list', methods=['GET'])
 @cross_origin()
 def user_list():
+    num_users = 50
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
     users_list = []
@@ -279,7 +306,11 @@ def user_list():
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    cur.execute('select u.username, u.level, u.xp from user u;')
+    query = '''SELECT u.username, u.level, u.xp
+                FROM user u
+                LIMIT {}
+                ORDER BY u.level DESC, u.xp DESC;'''.format(num_users)
+    cur.execute(query)
     while True:
         x = cur.fetchone()
         if x is None:
@@ -315,6 +346,20 @@ def user_details():
         'xp': xp,
     }
     return {'users': user}
+
+@app.route('/user/details', methods=['GET'])
+@cross_origin()
+def user_details():
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
+    data = request.get_json()
+    if data['token'] is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is None:
+        raise AccessError ("Invalid Token")
 
 if __name__ == '__main__':
     app.run(debug=True, port=4000)

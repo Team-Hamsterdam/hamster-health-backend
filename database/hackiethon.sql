@@ -10,18 +10,35 @@ CREATE TABLE user (
     PRIMARY KEY (token)
 );
 
-CREATE table task (
-    task_id integer NOT NULL,
+CREATE TABLE days (
+    token string NOT NULL,
+    date string NOT NULL,
+    status boolean NOT NULL,
+    completion int,
+    note string
+    PRIMARY KEY (token, date),
+    foreign key (token) references user(token)
+
+)
+
+CREATE TABLE task (
+    token string,
+    task_id integer UNIQUE NOT NULL,
     title string NOT NULL,
     description string,
     task_xp integer,
+    -- is_completed boolean,
     is_custom boolean,
-    PRIMARY KEY (task_id)
+    -- is_active boolean,
+    PRIMARY KEY (task_id),
+    foreign key (token) references user(token)
 );
 
 CREATE TABLE active_task (
     token string NOT NULL,
-    task_id integer NOT NULL,
+    task_id integer UNIQUE NOT NULL,
+    title string NOT NULL,
+    description string NOT NULL,
     is_completed boolean,
     PRIMARY KEY (token, task_id),
     foreign key (token) references user(token),
@@ -55,3 +72,12 @@ CREATE TABLE active_task (
 -- select t.task_id, t.title, t.description, t.task_xp from task
 -- join active_task active on active.task_id = t.task_id
 -- where active.token = {};
+
+-- select u.username, u.level, u.xp from user u:
+
+-- UPDATE user set logged_in = 1 where user.token = "{}";
+
+-- SELECT u.username, u.level, u.xp
+-- FROM user u
+-- LIMIT 50
+-- ORDER BY u.level DESC, u.xp DESC;
