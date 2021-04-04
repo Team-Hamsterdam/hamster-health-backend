@@ -296,17 +296,19 @@ def task_gettasks():
     tasks_list = []
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
-    data = request.get_json()
-    if data['token'] is None:
+    data = request.headers.get('Authorization')
+    if data is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user u where u.token = "{}";'''.format(data)
     cur.execute(query)
-    x = cur.fetchone()
+    x = cur.fetchall()
+    print(x)
     if x is None:
         raise AccessError ("Invalid Token")
-    query = '''select t.task_id, t.title, t.description, t.task_xp t.is_custom from task
-                join active_task active on active.task_id = t.task_id
-                where active.token = {};'''.format(data['token'])
+    query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
+                join active_task active on active.task_id = task.task_id
+                where active.token = "{}";'''.format(data)
+    cur.execute(query)
     while True:
         x = cur.fetchone()
         if x is None:
@@ -395,4 +397,4 @@ def user_details():
 #         raise AccessError ("Invalid Token")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=4000)
+    app.run(debug=True, port=4500)
