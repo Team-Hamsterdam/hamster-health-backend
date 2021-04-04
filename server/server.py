@@ -244,13 +244,13 @@ def task_add_active_task():
     x = cur.fetchone()
     if x is None:
         raise NotFound ("Task not found")
+    title, description = x
     query = '''select active_task.task_id from active_task
                 where active_task.task_id = {};'''.format(data['task_id'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
         raise ConflictError ("Task already chosen")
-    title, description = x
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO active_task (token, task_id, title, description, is_completed)
                 VALUES ("{}", {}, "{}", "{}", 0);'''.format(parsed_token, data['task_id'], title, description)
