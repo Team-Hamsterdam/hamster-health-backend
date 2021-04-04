@@ -224,8 +224,10 @@ def task_removepersonal():
 def task_add_active_task():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
-    data = request.get_json()
+
+
     parsed_token = request.headers.get('Authorization')
+    data = request.get_json()
     if parsed_token is None:
         raise AccessError ("Invalid Token")
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
@@ -233,12 +235,15 @@ def task_add_active_task():
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    if data['task_id'] is None:
-        raise NotFound ("Task not found")
+
+    # if data['task_id'] is None:
+    #     raise NotFound ("Task not found")
     query = '''select task.title, task.description from task
                 where task.task_id = {};'''.format(data['task_id'])
     cur.execute(query)
     x = cur.fetchone()
+    if x is None:
+        raise NotFound ("Task not found")
     title, description = x
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO active_task (token, task_id, title, description, is_completed)

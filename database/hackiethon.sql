@@ -34,7 +34,7 @@ CREATE TABLE task (
 
 CREATE TABLE active_task (
     token string NOT NULL,
-    task_id integer UNIQUE NOT NULL,
+    task_id integer NOT NULL,
     title string NOT NULL,
     description string NOT NULL,
     is_completed boolean,
@@ -88,7 +88,7 @@ INSERT INTO task (task_id, title, description, task_xp, is_custom) VALUES (1, "R
 
 -- select task.task_id, task.title, task.description from task where task.token = "{}" and task.task_id = {};
 
-UPDATE user
-    SET user.level = {},
-        user.xp = {}
-WHERE user.token = "{}";
+-- UPDATE user
+--     SET user.level = {},
+--         user.xp = {}
+-- WHERE user.token = "{}";
