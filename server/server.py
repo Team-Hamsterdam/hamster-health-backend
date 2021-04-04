@@ -289,7 +289,7 @@ def task_add_active_task():
         raise InvalidUsage('Task not found', status_code=404)
     title, description = x
     query = '''select active_task.task_id from active_task
-                where active_task.task_id = {} and active_task.token = {};'''.format(data['task_id'], parsed_token)
+                where active_task.task_id = {} and active_task.token = "{}";'''.format(data['task_id'], parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
