@@ -244,7 +244,7 @@ def task_add_active_task():
     x = cur.fetchone()
     if x is None:
         raise NotFound ("Task not found")
-    query = '''select active_tast.task_id from active_task
+    query = '''select active_task.task_id from active_task
                 where active_task.task_id = {};'''.format(data['task_id'])
     cur.execute(query)
     x = cur.fetchone()
