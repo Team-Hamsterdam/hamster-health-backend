@@ -520,10 +520,14 @@ def user_details():
     cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";'.format(parsed_token))
     x = cur.fetchone()
     username, level, xp = x
+    cur.execute('select count(*) from user where user.level > {};'.format(level))
+    x = cur.fetchone()
+    rank = x
     user = {
         'username': username,
         'level': level,
         'xp': xp,
+        'rank': rank[0]+1
     }
     return {'user': user}
 
