@@ -326,6 +326,76 @@ def task_gettasks():
 
     return {"tasks": tasks_list}
 
+@app.route('/task/getourtasks', methods=['GET'])
+@cross_origin()
+def task_get_our_tasks():
+    tasks_list = []
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
+    data = request.headers.get('Authorization')
+    if data is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user u where u.token = "{}";'''.format(data)
+    cur.execute(query)
+    x = cur.fetchall()
+    print(x)
+    if x is None:
+        raise AccessError ("Invalid Token")
+    query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
+                where task.is_custom = 0;'''
+    cur.execute(query)
+    while True:
+        x = cur.fetchone()
+        if x is None:
+            break
+        task_id, title, description, task_xp, is_custom = x
+        task = {
+            'task_id': task_id,
+            'title': title,
+            'description': description,
+            'task_xp': task_xp,
+            'is_custom': is_custom
+        }
+        tasks_list.append(task)
+
+
+    return {"tasks": tasks_list}
+
+@app.route('/task/getcustomtasks', methods=['GET'])
+@cross_origin()
+def task_get_custom_tasks():
+    tasks_list = []
+    con = sqlite3.connect('../database/hackiethon.db')
+    cur = con.cursor()
+    data = request.headers.get('Authorization')
+    if data is None:
+        raise AccessError ("Invalid Token")
+    query = '''select u.token from user u where u.token = "{}";'''.format(data)
+    cur.execute(query)
+    x = cur.fetchall()
+    print(x)
+    if x is None:
+        raise AccessError ("Invalid Token")
+    query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
+                where task.is_custom = 1;'''
+    cur.execute(query)
+    while True:
+        x = cur.fetchone()
+        if x is None:
+            break
+        task_id, title, description, task_xp, is_custom = x
+        task = {
+            'task_id': task_id,
+            'title': title,
+            'description': description,
+            'task_xp': task_xp,
+            'is_custom': is_custom
+        }
+        tasks_list.append(task)
+
+
+    return {"tasks": tasks_list}
+
 @app.route('/user/list', methods=['GET'])
 @cross_origin()
 def user_list():
