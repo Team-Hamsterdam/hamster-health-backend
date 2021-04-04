@@ -128,7 +128,6 @@ def auth_register():
     cur.execute('BEGIN TRANSACTION;')
     query = '''
                 INSERT INTO user (token, username, password, email, name, level, xp) VALUES ("{}", "{}", "{}", "{}", "{}", 0, 0);
-
             '''.format(token, data['username'], hashed_password, data['email'], data['name'])
     cur.execute(query)
     cur.execute('COMMIT;')
@@ -530,20 +529,6 @@ def user_details():
         'rank': rank[0]+1
     }
     return {'user': user}
-
-# @app.route('/user/details', methods=['GET'])
-# @cross_origin()
-# def user_details():
-#     con = sqlite3.connect('../database/hackiethon.db')
-#     cur = con.cursor()
-#     data = request.get_json()
-#     if data['token'] is None:
-#         raise AccessError ("Invalid Token")
-#     query = '''select u.token from user.u where u.token = "{}";'''.format(data['token'])
-#     cur.execute(query)
-#     x = cur.fetchone()
-#     if x is None:
-#         raise AccessError ("Invalid Token")
 
 if __name__ == '__main__':
     app.run(debug=True, port=4500)
