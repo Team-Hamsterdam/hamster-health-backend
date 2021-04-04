@@ -251,12 +251,13 @@ def task_finish():
     xp_threshold = 3
     new_level = 0
     new_xp = 0
+    parsed_token = request.headers.get('Authorization')
     data = request.get_json()
-    if data['token'] is None:
+    if parsed_token is None:
         raise AccessError ("Invalid Token")
     if data['task_id'] is None:
         raise NotFound ("Task not found")
-    query = '''select u.token from user u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
@@ -264,13 +265,13 @@ def task_finish():
     cur.execute('BEGIN TRANSACTION;')
     query = '''UPDATE active_task
                 SET  is_completed = True
-                WHERE active_task.token = "{}";'''.format(data['token'])
+                WHERE active_task.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     cur.execute('COMMIT;')
     cur.execute('''select task.task_xp from task where task.task_id = {};'''.format(data['task_id']))
     x = cur.fetchone()
     task_xp = x
-    query = '''select u.level, u.xp from user u where u.token = "{}";'''.format(data['token'])
+    query = '''select u.level, u.xp from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     level, user_xp = x
@@ -284,7 +285,7 @@ def task_finish():
     query = ''' UPDATE user
                     SET level = {},
                         xp = {}
-                WHERE token = "{}";'''.format(new_level, new_xp, data['token'])
+                WHERE token = "{}";'''.format(new_level, new_xp, parsed_token)
     cur.execute(query)
     cur.execute('COMMIT;')
 
