@@ -423,15 +423,15 @@ def user_list():
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user.u where u.token = "{}";'''.format(parsed_token)
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    query = '''SELECT u.username, u.level, u.xp
-                FROM user u
-                LIMIT {}
-                ORDER BY u.level DESC, u.xp DESC;'''.format(num_users)
+    query = '''SELECT user.username, user.level, user.xp
+                FROM user
+                ORDER BY user.level DESC, user.xp DESC
+                LIMIT 50;'''.format(num_users)
     cur.execute(query)
     while True:
         x = cur.fetchone()
@@ -443,7 +443,7 @@ def user_list():
             'level': level,
             'xp': xp,
         }
-        user_list.append(user)
+        users_list.append(user)
     return {'users': users_list}
 
 @app.route('/user/details', methods=['GET'])
@@ -451,16 +451,15 @@ def user_list():
 def user_details():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
-    data = request.get_json()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise AccessError ("Invalid Token")
-    query = '''select u.token from user.u where u.token = "{}";'''.format(parsed_token)
+    query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise AccessError ("Invalid Token")
-    cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";').format(parsed_token)
+    cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";'.format(parsed_token))
     x = cur.fetchone()
     username, level, xp = x
     user = {
@@ -468,7 +467,7 @@ def user_details():
         'level': level,
         'xp': xp,
     }
-    return {'users': user}
+    return {'user': user}
 
 # @app.route('/user/details', methods=['GET'])
 # @cross_origin()
