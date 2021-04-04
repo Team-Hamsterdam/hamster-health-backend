@@ -307,7 +307,7 @@ def task_add_active_task():
 def task_finish():
     con = sqlite3.connect('../database/hackiethon.db')
     cur = con.cursor()
-    xp_threshold = 3
+    xp_threshold = 50
     new_level = 0
     new_xp = 0
     parsed_token = request.headers.get('Authorization')
