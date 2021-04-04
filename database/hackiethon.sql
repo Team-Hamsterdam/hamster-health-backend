@@ -15,11 +15,11 @@ CREATE TABLE days (
     date string NOT NULL,
     status boolean NOT NULL,
     completion int,
-    note string
+    note string,
     PRIMARY KEY (token, date),
     foreign key (token) references user(token)
 
-)
+);
 
 CREATE TABLE task (
     token string,
@@ -27,9 +27,7 @@ CREATE TABLE task (
     title string NOT NULL,
     description string,
     task_xp integer,
-    -- is_completed boolean,
     is_custom boolean,
-    -- is_active boolean,
     PRIMARY KEY (task_id),
     foreign key (token) references user(token)
 );
@@ -44,6 +42,12 @@ CREATE TABLE active_task (
     foreign key (token) references user(token),
     foreign key (task_id) references tasks(task_id)
 );
+
+INSERT INTO task (task_id, title, description, task_xp, is_custom) VALUES (1, "Run", "Run 1km", 5, 0);
+
+-- INSERT INTO active_task (token, task_id, title, description, is_completed) VALUES ("{}", {}, "{}", "{}", 0);
+
+-- INSERT INTO task (task_id, title, description, task_xp, is_custom) VALUES (1, "Run", "Run 1km", 5, 0);
 
 -- select count(t.task_id) from task t
 
@@ -81,3 +85,10 @@ CREATE TABLE active_task (
 -- FROM user u
 -- LIMIT 50
 -- ORDER BY u.level DESC, u.xp DESC;
+
+-- select task.task_id, task.title, task.description from task where task.token = "{}" and task.task_id = {};
+
+UPDATE user
+    SET user.level = {},
+        user.xp = {}
+WHERE user.token = "{}";
