@@ -85,14 +85,16 @@ def auth_register():
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
-        abort (409, description='Username already taken')
+        # abort (409, description='Username already taken')
+        return 'Username already taken', 409
 
     # Checks if email is unique
     query = '''select u.email from user u where u.email = "{}"; '''.format(data['email'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
-        abort (409, description='Email already in use')
+        # abort (409, description='Email already in use')
+        return 'Email already in use', 409
 
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
