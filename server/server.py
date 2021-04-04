@@ -75,16 +75,19 @@ def auth_login():
     cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
-        raise InputError ('Please enter your username and password')
+        # raise InputError ('Please enter your username and password')
+        raise InvalidUsage('Please enter your username and password', status_code=400)
     query = '''select u.token, u.password from user u where u.username = "{}"; '''.format(data['username'])
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ('Invalid username')
+        # raise AccessError ('Invalid username')
+        raise InvalidUsage('Invalid username', status_code=403)
     token,password = x
     hashed_password = hasher(data['password'])
     if hashed_password != password:
-        raise AccessError ('Incorrect password')
+        # raise AccessError ('Incorrect password')
+        raise InvalidUsage('Incorrect password', status_code=403)
 
     cur.execute('BEGIN TRANSACTION;')
     cur.execute('''UPDATE user set logged_in = 1 where user.token = "{}";'''.format(token))
@@ -99,7 +102,8 @@ def auth_register():
     cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None or data['name'] is None or data['email'] is None:
-        raise InputError ('Please fill in all details')
+        # raise InputError ('Please fill in all details')
+        raise InvalidUsage('Please fill in all details', status_code=400)
     print(data)
     # Checks if username is unique
     query = '''select u.username from user u where u.username = "{}"; '''.format(data['username'])
@@ -137,14 +141,17 @@ def auth_check():
     cur = con.cursor()
     data = request.headers.get('Authorization')
     if data is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.logged_in from user.u where u.token = "{}";'''.format(data)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     if x is False:
-        raise AccessError ("User not logged in")
+        # raise AccessError ("User not logged in")
+        raise InvalidUsage('User not logged in', status_code=403)
     return {'token': data}
 
 @app.route('/task/create', methods=['POST'])
@@ -155,7 +162,8 @@ def task_create():
     parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if data['title'] is None:
-        raise InputError ("Please enter a title")
+        # raise InputError ("Please enter a title")
+        raise InvalidUsage('Please enter a title', status_code=400)
     # Generate task_id
     task_id = 0
     query = '''select max(t.task_id) from task t;'''
@@ -188,7 +196,8 @@ def task_edit():
     cur = con.cursor()
     data = request.get_json()
     if data['title'] is None:
-        raise InputError ("Please enter a title")
+        # raise InputError ("Please enter a title")
+        raise InvalidUsage('Please enter a title', status_code=400)
     cur.execute('BEGIN TRANSACTION;')
     query = '''UPDATE active_task t
                 SET  t.title = "{}",
@@ -206,14 +215,18 @@ def task_remove():
     parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     if data['task_id'] is None:
-        raise NotFound ("Task not found")
+        # raise NotFound ("Task not found")
+        raise InvalidUsage('Task not found', status_code=404)
+
     cur.execute('BEGIN TRANSACTION;')
     query = '''DELETE FROM task
                 WHERE task.task_id = {} and task.token = "{}";'''.format(data['task_id'], parsed_token)
@@ -229,14 +242,17 @@ def task_removepersonal():
     parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     if data['task_id'] is None:
-        raise NotFound ("Task not found")
+        # raise NotFound ("Task not found")
+        raise InvalidUsage('Task not found', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = '''DELETE FROM active_task
                 WHERE active_task.task_id = {} and active_task.token = "{}";'''.format(data['task_id'], parsed_token)
@@ -254,12 +270,14 @@ def task_add_active_task():
     parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
 
     # if data['task_id'] is None:
     #     raise NotFound ("Task not found")
@@ -268,14 +286,16 @@ def task_add_active_task():
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise NotFound ("Task not found")
+        # raise NotFound ("Task not found")
+        raise InvalidUsage('Task not found', status_code=404)
     title, description = x
     query = '''select active_task.task_id from active_task
                 where active_task.task_id = {};'''.format(data['task_id'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
-        raise ConflictError ("Task already chosen")
+        # raise ConflictError ("Task already chosen")
+        raise InvalidUsage('Task already chosen', status_code=409)
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO active_task (token, task_id, title, description, is_completed)
                 VALUES ("{}", {}, "{}", "{}", 0);'''.format(parsed_token, data['task_id'], title, description)
@@ -294,14 +314,17 @@ def task_finish():
     parsed_token = request.headers.get('Authorization')
     data = request.get_json()
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     if data['task_id'] is None:
-        raise NotFound ("Task not found")
+        # raise NotFound ("Task not found")
+        raise InvalidUsage('Task not found', status_code=404)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     cur.execute('BEGIN TRANSACTION;')
     query = '''UPDATE active_task
                 SET  is_completed = True
@@ -339,13 +362,15 @@ def task_gettasks():
     cur = con.cursor()
     data = request.headers.get('Authorization')
     if data is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(data)
     cur.execute(query)
     x = cur.fetchall()
     print(x)
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
                 join active_task active on active.task_id = task.task_id
                 where active.token = "{}";'''.format(data)
@@ -375,13 +400,15 @@ def task_get_our_tasks():
     cur = con.cursor()
     data = request.headers.get('Authorization')
     if data is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(data)
     cur.execute(query)
     x = cur.fetchall()
     print(x)
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
                 where task.is_custom = 0;'''
     cur.execute(query)
@@ -410,13 +437,15 @@ def task_get_custom_tasks():
     cur = con.cursor()
     data = request.headers.get('Authorization')
     if data is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(data)
     cur.execute(query)
     x = cur.fetchall()
     print(x)
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
                 where task.is_custom = 1 and task.token = "{}";'''.format(data)
     cur.execute(query)
@@ -447,12 +476,14 @@ def user_list():
     # data = request.get_json()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''SELECT user.username, user.level, user.xp
                 FROM user
                 ORDER BY user.level DESC, user.xp DESC
@@ -478,12 +509,14 @@ def user_details():
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     query = '''select u.token from user u where u.token = "{}";'''.format(parsed_token)
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
-        raise AccessError ("Invalid Token")
+        # raise AccessError ("Invalid Token")
+        raise InvalidUsage('Invalid Token', status_code=403)
     cur.execute('select u.username, u.level, u.xp from user u where u.token = "{}";'.format(parsed_token))
     x = cur.fetchone()
     username, level, xp = x
