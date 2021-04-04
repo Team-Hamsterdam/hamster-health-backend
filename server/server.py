@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, abort
 from flask_cors import CORS
 import sqlite3,sys
 from werkzeug.exceptions import HTTPException
@@ -85,14 +85,14 @@ def auth_register():
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
-        raise ConflictError ('Username already taken')
+        abort (409, description='Username already taken')
 
     # Checks if email is unique
     query = '''select u.email from user u where u.email = "{}"; '''.format(data['email'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
-        raise ConflictError ('Email already in use')
+        abort (409, description='Email already in use')
 
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
