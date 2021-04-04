@@ -295,7 +295,7 @@ def task_add_active_task():
     x = cur.fetchone()
     if x is not None:
         # raise ConflictError ("Task already chosen")
-        raise InvalidUsage('Task already chosen', status_code=409)
+        raise InvalidUsage('Task already active', status_code=409)
     cur.execute('BEGIN TRANSACTION;')
     query = '''INSERT INTO active_task (token, task_id, title, description, is_completed)
                 VALUES ("{}", {}, "{}", "{}", 0);'''.format(parsed_token, data['task_id'], title, description)
