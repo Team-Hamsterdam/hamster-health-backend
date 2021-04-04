@@ -377,7 +377,7 @@ def task_get_custom_tasks():
     if x is None:
         raise AccessError ("Invalid Token")
     query = '''select task.task_id, task.title, task.description, task.task_xp, task.is_custom from task
-                where task.is_custom = 1;'''
+                where task.is_custom = 1 and task.token = "{}";'''.format(data)
     cur.execute(query)
     while True:
         x = cur.fetchone()
