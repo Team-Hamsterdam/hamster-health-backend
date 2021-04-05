@@ -1,4 +1,4 @@
-# Hamster Health Back end
+# Hamster Health Backend
 ## Libraries/Frameworks/Languages
 - Python, Flask, SQLite
 
