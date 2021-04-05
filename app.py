@@ -58,8 +58,8 @@ def generate_token(username):
     """
     private_key = "SecretKey"
     # private_key = os.environ['PRIVATE_KEY']
-    token = jwt.encode({'username': username}, private_key, algorithm='HS256').decode("utf-8")
-    return (token)
+    token = jwt.encode({'username': username}, private_key, algorithm='HS256')
+    return token
 
 class InvalidUsage(Exception):
     status_code = 400
