@@ -56,9 +56,9 @@ def generate_token(username):
     Input: username (str)
     Output: JWT-encoded token (str)
     """
-    private_key = 'HamsterHealthIsTheBestWebsite'
+    private_key = "SecretKey"
+    # private_key = os.environ['PRIVATE_KEY']
     token = jwt.encode({'username': username}, private_key, algorithm='HS256').decode("utf-8")
-    print('DDDDDDDDDDDDDDDD',token)
     return (token)
 
 class InvalidUsage(Exception):
@@ -117,7 +117,6 @@ def auth_register():
     if data['username'] is None or data['password'] is None or data['name'] is None or data['email'] is None:
         # raise InputError ('Please fill in all details')
         raise InvalidUsage('Please fill in all details', status_code=400)
-    print(data)
     # Checks if username is unique
     query = """select u.username from user_table u where u.username = '{}'; """.format(data['username'])
     cur.execute(query)
@@ -371,7 +370,6 @@ def task_gettasks():
     query = """select u.token from user_table u where u.token = '{}';""".format(data)
     cur.execute(query)
     x = cur.fetchall()
-    print(x)
     if x is None:
         # raise AccessError ("Invalid Token")
         raise InvalidUsage('Invalid Token', status_code=403)
@@ -408,7 +406,6 @@ def task_get_our_tasks():
     query = """select u.token from user_table u where u.token = '{}';""".format(data)
     cur.execute(query)
     x = cur.fetchall()
-    print(x)
     if x is None:
         # raise AccessError ("Invalid Token")
         raise InvalidUsage('Invalid Token', status_code=403)
@@ -444,7 +441,6 @@ def task_get_custom_tasks():
     query = """select u.token from user_table u where u.token = '{}';""".format(data)
     cur.execute(query)
     x = cur.fetchall()
-    print(x)
     if x is None:
         # raise AccessError ("Invalid Token")
         raise InvalidUsage('Invalid Token', status_code=403)
